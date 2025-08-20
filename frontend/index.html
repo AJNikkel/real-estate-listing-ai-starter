@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real Estate Listing Generator</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 2rem;
+      line-height: 1.5;
+      color: #1f2937;
+    }
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.25rem;
+      background-color: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 0.375rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    #result {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.25rem;
+      background-color: #f9fafb;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Real Estate Listing Generator</h1>
+  <form id="generatorForm">
+    <label for="property">Property Details</label>
+    <textarea id="property" name="property" rows="4" required placeholder="e.g., 3 bed/2 bath, 1,500 sqft, updated kitchen and pool"></textarea>
+
+    <label for="tone">Tone</label>
+    <input id="tone" name="tone" type="text" placeholder="e.g., friendly, luxury, professional" />
+
+    <label for="audience">Audience</label>
+    <input id="audience" name="audience" type="text" placeholder="e.g., first‑time buyers" />
+
+    <label for="type">Output Type</label>
+    <select id="type" name="type">
+      <option value="MLS short">MLS Short</option>
+      <option value="MLS long">MLS Long</option>
+      <option value="Social caption">Social Caption</option>
+      <option value="TikTok script">TikTok Script</option>
+      <option value="Email blast">Email Blast</option>
+    </select>
+
+    <label for="words">Word Count (optional)</label>
+    <input id="words" name="words" type="number" min="50" step="10" placeholder="e.g., 150" />
+
+    <button type="submit">Generate</button>
+  </form>
+  <div id="result" style="display: none;"></div>
+
+  <script>
+    // Determine the API base URL. You can set `api` query param or store it in localStorage.
+    function getApiBase() {
+      const params = new URLSearchParams(window.location.search);
+      const queryApi = params.get('api');
+      if (queryApi) {
+        localStorage.setItem('apiBase', queryApi);
+        return queryApi;
+      }
+      const stored = localStorage.getItem('apiBase');
+      return stored ? stored : '';
+    }
+
+    document.getElementById('generatorForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const apiBase = getApiBase();
+      const property = document.getElementById('property').value;
+      const tone = document.getElementById('tone').value;
+      const audience = document.getElementById('audience').value;
+      const type = document.getElementById('type').value;
+      const words = document.getElementById('words').value;
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'block';
+      resultDiv.textContent = 'Generating…';
+
+      const payload = {
+        property_details: property,
+        tone: tone || null,
+        audience: audience || null,
+        output_type: type,
+        word_count: words ? parseInt(words) : null,
+      };
+
+      try {
+        const res = await fetch(`${apiBase}/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          throw new Error('Request failed with status ' + res.status);
+        }
+        const data = await res.json();
+        resultDiv.textContent = data.content || 'No content returned.';
+      } catch (err) {
+        console.error(err);
+        resultDiv.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
